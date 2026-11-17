@@ -193,6 +193,12 @@ def load_reward(trial_dir: Path) -> tuple[float | None, dict[str, float]]:
         str(k): float(v) for k, v in (data.get("details") or {}).items()
         if isinstance(v, (int, float)) and not isinstance(v, bool)
     }
+    # Harbor verifiers may emit named metrics directly, e.g. {"accuracy": 1.0}.
+    # Preserve their names without inventing an aggregate reward.
+    for name, value in data.items():
+        if name not in {"reward", "score", "details"} and \
+                isinstance(value, (int, float)) and not isinstance(value, bool):
+            details.setdefault(str(name), float(value))
     try:
         reward_f = float(reward) if reward is not None else None
     except (TypeError, ValueError):
